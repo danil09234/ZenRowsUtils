@@ -1,3 +1,5 @@
+import sys
+
 from zenrows import ZenRowsClient
 from .config import get_client
 from .exceptions import InitializationError
@@ -10,5 +12,5 @@ async def get_page_with_json_render(url: str, api_key: str | None = None) -> str
             raise InitializationError("No API key for the request")
     else:
         client = ZenRowsClient(api_key)
-    response = await client.get_async(url, params={"js_render": "true"})
+    response = await client.get_async(url, params={"js_render": "true", "block_resources": "image,media,font"})
     return response.text
