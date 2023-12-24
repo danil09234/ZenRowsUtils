@@ -1,5 +1,3 @@
-import sys
-
 from zenrows import ZenRowsClient
 from .config import get_client
 from .exceptions import InitializationError
