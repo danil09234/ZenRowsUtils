@@ -5,7 +5,7 @@ from loguru import logger
 client: ZenRowsClient | None = None
 
 
-def set_api_key(key: str):
+def set_api_key(key: str) -> None:
     global client
 
     client = ZenRowsClient(key)
