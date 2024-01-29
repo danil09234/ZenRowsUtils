@@ -1,6 +1,6 @@
 from zenrows import ZenRowsClient
 from .config import get_client
-from .exceptions import InitializationError
+from .exceptions import InitializationError, OutOfQuotaException
 from loguru import logger
 
 
@@ -15,9 +15,14 @@ async def get_page_with_json_render(url: str, api_key: str | None = None, retrie
     logger.success("ZenRows client was selected")
     logger.info("Awaiting response from ZenRows...")
 
-    while response := await client.get_async(url, params={"js_render": "true", "block_resources": "image,media,font"}):
+    while ((response := await client.get_async(url, params={"js_render": "true", "block_resources": "image,media,font"}))
+           or True):
         if response.status_code == 200:
             break
+
+        if response.status_code == 402:
+            logger.error("Out of ZenRows quota exception raised")
+            raise OutOfQuotaException()
 
         logger.warning(f"ZenRows returned invalid status code {response.status_code}. Response is {response.text}")
 
@@ -27,5 +32,5 @@ async def get_page_with_json_render(url: str, api_key: str | None = None, retrie
         retries -= 1
         logger.info("Retrying...")
 
-    logger.success("Response from ZenRows received. Returning...")
+    logger.success(f"Response from ZenRows received (status code {response.status_code}). Returning...")
     return response.text
