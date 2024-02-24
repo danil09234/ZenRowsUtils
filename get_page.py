@@ -1,6 +1,6 @@
 from requests import Response
 from zenrows import ZenRowsClient
-from .config import get_client
+from .config import get_client, requests_semaphore
 from .exceptions import InitializationError, OutOfQuotaException
 from loguru import logger
 
@@ -15,8 +15,15 @@ def get_client_helper(api_key: str | None) -> ZenRowsClient:
     return client
 
 
+async def get_async_helper(client, url, *args, **kwargs):
+    if requests_semaphore is None:
+        return await client.get_async(url, *args, **kwargs)
+    async with requests_semaphore:
+        return await client.get_async(url, *args, **kwargs)
+
+
 async def retries_helper(client: ZenRowsClient, retries: int, url: str, *args, **kwargs) -> Response:
-    while (response := await client.get_async(url, *args, **kwargs)) or True:
+    while (response := await get_async_helper(client, url, *args, **kwargs)) or True:
         if response.status_code == 200:
             break
 
