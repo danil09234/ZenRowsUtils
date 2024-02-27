@@ -23,6 +23,7 @@ async def get_async_helper(client, url, *args, **kwargs):
 
 
 async def retries_helper(client: ZenRowsClient, retries: int, url: str, *args, **kwargs) -> Response:
+    current_retry = 0
     while (response := await get_async_helper(client, url, *args, **kwargs)) or True:
         if response.status_code == 200:
             break
@@ -33,18 +34,17 @@ async def retries_helper(client: ZenRowsClient, retries: int, url: str, *args, *
 
         logger.warning(f"ZenRows returned invalid status code {response.status_code}. Response is {response.text}")
 
-        if retries <= 0:
+        if current_retry >= retries:
             break
 
-        retries -= 1
-        logger.info("Retrying...")
+        current_retry += 1
+        logger.info(f"Retrying (retry {current_retry}/{retries})...")
     return response
 
 
 async def get_page_with_json_render(url: str, api_key: str | None = None, retries: int = 2) -> str:
     logger.info("Getting page with json render...")
     client = get_client_helper(api_key)
-    logger.success("ZenRows client was selected")
     logger.info("Awaiting response from ZenRows...")
 
     response = await retries_helper(
@@ -52,17 +52,16 @@ async def get_page_with_json_render(url: str, api_key: str | None = None, retrie
         params={"js_render": "true", "block_resources": "image,media,font"}
     )
 
-    logger.success(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    logger.info(f"Response from ZenRows received (status code {response.status_code}). Returning...")
     return response.text
 
 
 async def get_page_with_custom_headers(url: str, headers: dict, api_key: str | None = None, retries: int = 2) -> str:
     logger.info("Getting page with custom headers render...")
     client = get_client_helper(api_key)
-    logger.success("ZenRows client was selected")
     logger.info("Awaiting response from ZenRows...")
 
     response = await retries_helper(client, retries, url, headers=headers)
 
-    logger.success(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    logger.info(f"Response from ZenRows received (status code {response.status_code}). Returning...")
     return response.text
