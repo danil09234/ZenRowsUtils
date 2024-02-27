@@ -38,7 +38,7 @@ async def retries_helper(client: ZenRowsClient, retries: int, url: str, *args, *
             break
 
         current_retry += 1
-        logger.info(f"Retrying (retry {current_retry}/{retries})...")
+        logger.warning(f"Retrying ({current_retry}/{retries}): {url}...")
     return response
 
 
@@ -52,7 +52,10 @@ async def get_page_with_json_render(url: str, api_key: str | None = None, retrie
         params={"js_render": "true", "block_resources": "image,media,font"}
     )
 
-    logger.info(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    if response.status_code == 200:
+        logger.success(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    else:
+        logger.warning(f"Response from ZenRows received (status code {response.status_code}). Returning...")
     return response.text
 
 
@@ -63,5 +66,8 @@ async def get_page_with_custom_headers(url: str, headers: dict, api_key: str | N
 
     response = await retries_helper(client, retries, url, headers=headers)
 
-    logger.info(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    if response.status_code == 200:
+        logger.success(f"Response from ZenRows received (status code {response.status_code}). Returning...")
+    else:
+        logger.warning(f"Response from ZenRows received (status code {response.status_code}). Returning...")
     return response.text
